@@ -32,19 +32,22 @@ func (p FuncParser) Apply(state ParserState) (*ParserResult, error) {
 	return p(state)
 }
 
-type scanner struct {
+// RuneScanner is a basic scanner based on a RuneReader
+type RuneScanner struct {
 	reader io.RuneReader
 	buffer *[]rune
 	cursor int
 }
 
-func (s *scanner) GetLocation() (int, int) {
+// GetLocation ...
+func (s *RuneScanner) GetLocation() (int, int) {
 	lines := strings.Split(string((*s.buffer)[:s.cursor]), "\n")
 	lastLine := lines[len(lines)-1]
 	return len(lines) - 1, len(lastLine) + 1
 }
 
-func (s *scanner) CurrentRune() rune {
+// CurrentRune ...
+func (s *RuneScanner) CurrentRune() rune {
 	loops := 0
 
 	for len(*s.buffer) <= s.cursor {
@@ -61,15 +64,17 @@ func (s *scanner) CurrentRune() rune {
 	return (*s.buffer)[s.cursor]
 }
 
-func (s *scanner) Remaining() ParserState {
-	return &scanner{
+// Remaining ...
+func (s *RuneScanner) Remaining() ParserState {
+	return &RuneScanner{
 		s.reader,
 		s.buffer,
 		s.cursor + 1,
 	}
 }
 
-func (s *scanner) PrintErrorMessage(e error) {
+// PrintErrorMessage ...
+func (s *RuneScanner) PrintErrorMessage(e error) {
 	var r rune
 	var err error
 
@@ -96,7 +101,7 @@ func (s *scanner) PrintErrorMessage(e error) {
 
 // ParseRuneReader - trivial
 func ParseRuneReader(parser Parser, r io.RuneReader) (interface{}, error) {
-	s := &scanner{r, &[]rune{}, 0}
+	s := &RuneScanner{r, &[]rune{}, 0}
 
 	pr, err := parser.Apply(s)
 	if err != nil {
