@@ -59,3 +59,13 @@ func TestMinimark(t *testing.T) {
 		)
 	}
 }
+
+func Benchmark1(b *testing.B) {
+	var r interface{}
+
+	for n := 0; n < b.N; n++ {
+		r, _ = c.ParseRuneReader(parser.Minimark, strings.NewReader(example1))
+	}
+
+	b.Log(r)
+}
