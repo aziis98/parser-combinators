@@ -30,7 +30,7 @@ func (n *Paragraph) Content() string {
 
 // List ...
 type List struct {
-	Items []MinimarkNode
+	Items []*Item
 }
 
 // Content ...

@@ -1,12 +1,11 @@
 package minimark
 
 import (
-	"encoding/json"
-	"log"
 	"strings"
 	"testing"
 
 	"github.com/aziis98/parcomb"
+	"github.com/aziis98/parcomb/examples/minimark/doc"
 	"github.com/aziis98/parcomb/examples/minimark/parser"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,38 +29,33 @@ Paragraph of some long text.
 func TestMinimark(t *testing.T) {
 	{
 		r, _ := parcomb.ParseRuneReader(parser.Heading, strings.NewReader("### Prova"))
-		assert.Equal(t, []interface{}{3, "Prova"}, r)
+		assert.Equal(t, &doc.Heading{Level: 3, Text: "Prova"}, r)
 	}
 	{
 		r, _ := parcomb.ParseRuneReader(parser.Minimark, strings.NewReader(example1))
 
-		json, err := json.MarshalIndent(r, "", "  ")
-		if err != nil {
-			t.Fatal(err)
-		}
+		// json, err := json.MarshalIndent(r, "", "  ")
+		// if err != nil {
+		// 	t.Fatal(err)
+		// }
 
-		log.Printf(`%s`, json)
+		// log.Printf(`%s`, json)
 
-		assert.Equal(t, []interface{}([]interface{}{
-			"\n",
-			[]interface{}{1, "Prova"},
-			"\n",
-			[]interface{}{2, "Prova"},
-			"\n",
-			[]interface{}{3, "Prova"},
-			"\n", "\n",
-			"Paragraph of some long text.\nParagraph of some long text.\nParagraph of some long text.",
-			"\n",
-			"\n",
-			"Paragraph of some long text.",
-			"\n",
-			"\n",
-			[]interface{}{
-				[]interface{}{" - ", "First item of list"},
-				[]interface{}{" - ", "Second item of this list"},
+		assert.Equal(t,
+			[]doc.MinimarkNode{
+				&doc.Heading{Level: 1, Text: "Prova"},
+				&doc.Heading{Level: 2, Text: "Prova"},
+				&doc.Heading{Level: 3, Text: "Prova"},
+				&doc.Paragraph{Text: "Paragraph of some long text.\nParagraph of some long text.\nParagraph of some long text."},
+				&doc.Paragraph{Text: "Paragraph of some long text."},
+				&doc.List{
+					Items: []*doc.Item{
+						{Depth: 0, Text: "First item of list"},
+						{Depth: 0, Text: "Second item of this list"},
+					},
+				},
 			},
-			"\n",
-		},
-		), r)
+			r,
+		)
 	}
 }

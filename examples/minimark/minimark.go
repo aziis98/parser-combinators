@@ -8,8 +8,8 @@ var HeadingParser = parser.Heading
 // ParagraphParser shortcur for "parser.Paragraph"
 var ParagraphParser = parser.Paragraph
 
-// ItemizeParser shortcur for "parser.Itemize"
-var ItemizeParser = parser.Itemize
+// ListParser shortcur for "parser.Itemize"
+var ListParser = parser.List
 
 // MinimarkParser shortcur for "parser.Minimark"
 var MinimarkParser = parser.Minimark
