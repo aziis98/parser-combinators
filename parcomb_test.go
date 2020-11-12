@@ -1,11 +1,16 @@
 package parcomb
 
 import (
+	"log"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
 
 func TestExpectRune(t *testing.T) {
 	var r interface{}
@@ -19,7 +24,7 @@ func TestExpectRune(t *testing.T) {
 	assert.Equal(t, "a", r)
 
 	_, err = ParseRuneReader(parser, strings.NewReader(""))
-	assert.EqualError(t, err, `Expected "a"`)
+	assert.EqualError(t, err, `Stream ended, expected "a"`)
 	_, err = ParseRuneReader(parser, strings.NewReader("b"))
 	assert.EqualError(t, err, `Expected "a"`)
 	_, err = ParseRuneReader(parser, strings.NewReader("bbb"))
@@ -40,29 +45,26 @@ func TestExpectAny(t *testing.T) {
 	assert.Equal(t, "c", r)
 
 	_, err = ParseRuneReader(parser, strings.NewReader(""))
-	assert.EqualError(t, err, `Expected one of a, b, c`)
+	assert.EqualError(t, err, `Stream ended, expected one of a, b, c`)
 	_, err = ParseRuneReader(parser, strings.NewReader("d"))
 	assert.EqualError(t, err, `Expected one of a, b, c`)
 }
 
 func TestSeq(t *testing.T) {
+	parser1 := SeqOf(Expect('a'), Expect('a'))
 	{
-		parser1 := SeqOf(Expect('a'), Expect('a'))
 		r, _ := ParseRuneReader(parser1, strings.NewReader("aa"))
 		assert.EqualValues(t, []interface{}{"a", "a"}, r)
 	}
 	{
-		parser1 := SeqOf(Expect('a'), Expect('a'))
 		r, _ := ParseRuneReader(parser1, strings.NewReader("aaa"))
 		assert.EqualValues(t, []interface{}{"a", "a"}, r)
 	}
 	{
-		parser1 := SeqOf(Expect('a'), Expect('a'))
 		_, err := ParseRuneReader(parser1, strings.NewReader("a"))
-		assert.EqualError(t, err, `Expected "a"`)
+		assert.EqualError(t, err, `Stream ended, expected "a"`)
 	}
 	{
-		parser1 := SeqOf(Expect('a'), Expect('a'))
 		_, err := ParseRuneReader(parser1, strings.NewReader("ababab"))
 		assert.EqualError(t, err, `Expected "a"`)
 	}
@@ -80,7 +82,7 @@ func TestAny(t *testing.T) {
 	}
 	{
 		_, err := ParseRuneReader(parser1, strings.NewReader(""))
-		assert.EqualError(t, err, "All cases failed:\n - Expected \"a\"\n - Expected \"b\"")
+		assert.EqualError(t, err, "All cases failed:\n - Stream ended, expected \"a\"\n - Stream ended, expected \"b\"")
 	}
 	{
 		_, err := ParseRuneReader(parser1, strings.NewReader("ccc"))
@@ -245,3 +247,28 @@ func BenchmarkDecimal2(b *testing.B) {
 
 	b.Log(r)
 }
+
+// func ExampleRestarableOneOrMore() {
+// 	parser := RestarableOneOrMore(
+// 		StringifyResult(
+// 			SeqOf(
+// 				OneOrMore(ExpectAny([]rune("ab"))),
+// 				SeqIgnore(AnyOf(Expect('_'), EOF)),
+// 			),
+// 		),
+// 		Expect('_'),
+// 	)
+
+// 	r, err := ParseRuneReader(parser, strings.NewReader("aaaa_aaaaa_aaacccc_aaaaa_bbbbb"))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	// json, err := json.Marshal(r)
+// 	// if err != nil {
+// 	// 	log.Fatal(err)
+// 	// }
+
+// 	log.Printf("%+v", r)
+// 	// Output: ["aaaa", "aaaaa", &Partial{"aaa"}, "aaaaa", "aa"]
+// }

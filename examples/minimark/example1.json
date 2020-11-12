@@ -1,0 +1,40 @@
+[
+    {
+        "node.type": "heading",
+        "level": 1,
+        "text": "Prova"
+    },
+    {
+        "node.type": "heading",
+        "level": 2,
+        "text": "Prova"
+    },
+    {
+        "node.type": "heading",
+        "level": 3,
+        "text": "Prova"
+    },
+    {
+        "node.type": "paragraph",
+        "text": "Paragraph of some long text.\nParagraph of some long text.\nParagraph of some long text."
+    },
+    {
+        "node.type": "paragraph",
+        "text": "Paragraph of some long text."
+    },
+    {
+        "node.type": "list",
+        "items": [
+            {
+                "node.type": "list.item",
+                "depth": 0,
+                "text": "First item of list"
+            },
+            {
+                "node.type": "list.item",
+                "depth": 0,
+                "text": "Second item of this list"
+            }
+        ]
+    }
+]

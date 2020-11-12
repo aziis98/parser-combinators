@@ -3,6 +3,7 @@ package parcomb
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 )
 
@@ -86,11 +87,11 @@ func (s *scanner) PrintErrorMessage(e error) {
 	loc := fmt.Sprintf(`%d:%d`, line, col)
 
 	if e != nil {
-		fmt.Printf("%v\n", e)
+		fmt.Fprintf(os.Stderr, "%v\n", e)
 	}
-	fmt.Printf("at %s\n", loc)
-	fmt.Printf(" | %s\n", lines[line])
-	fmt.Printf("  %s^\n", strings.Repeat(" ", col))
+	fmt.Fprintf(os.Stderr, "at %s\n", loc)
+	fmt.Fprintf(os.Stderr, " | %s\n", lines[line])
+	fmt.Fprintf(os.Stderr, "  %s^\n", strings.Repeat(" ", col))
 }
 
 // ParseRuneReader - trivial
@@ -99,9 +100,6 @@ func ParseRuneReader(parser Parser, r io.RuneReader) (interface{}, error) {
 
 	pr, err := parser.Apply(s)
 	if err != nil {
-		errScanner := pr.Remaining.(*scanner)
-		errScanner.PrintErrorMessage(err)
-
 		return nil, err
 	}
 

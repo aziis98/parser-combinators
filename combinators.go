@@ -2,6 +2,7 @@ package parcomb
 
 import (
 	"fmt"
+
 	// "log"
 	"strings"
 )
@@ -20,7 +21,7 @@ func Fail(state ParserState, err error) (*ParserResult, error) {
 func Expect(expected rune) Parser {
 	return FuncParser(func(state ParserState) (*ParserResult, error) {
 		if state.CurrentRune() == 0 {
-			return Fail(state, fmt.Errorf(`Stream ended before expected`))
+			return Fail(state, fmt.Errorf(`Stream ended, expected "%c"`, expected))
 		}
 
 		if state.CurrentRune() != expected {
@@ -35,7 +36,7 @@ func Expect(expected rune) Parser {
 func ExpectPredicate(predicate func(rune) bool, descriptions ...string) Parser {
 	return FuncParser(func(state ParserState) (*ParserResult, error) {
 		if state.CurrentRune() == 0 {
-			return Fail(state, fmt.Errorf(`Stream ended before expected`))
+			return Fail(state, fmt.Errorf(`Stream ended, expected "%v"`, descriptions))
 		}
 
 		// log.Printf(`predicate: "%c" is %v`, state.CurrentRune(), descriptions)
@@ -53,7 +54,7 @@ func ExpectAny(expectedList []rune) Parser {
 	return FuncParser(func(state ParserState) (*ParserResult, error) {
 		for _, expected := range expectedList {
 			if state.CurrentRune() == 0 {
-				return Fail(state, fmt.Errorf(`Stream ended before expected`))
+				return Fail(state, fmt.Errorf(`Stream ended, expected one of %v`, strings.Join(strings.Split(string(expectedList), ""), ", ")))
 			}
 
 			if state.CurrentRune() == expected {
@@ -70,9 +71,9 @@ func ExpectString(expectedList []rune) Parser {
 	return FuncParser(func(state ParserState) (*ParserResult, error) {
 		currentState := state
 
-		for _, expected := range expectedList {
+		for i, expected := range expectedList {
 			if state.CurrentRune() == 0 {
-				return Fail(state, fmt.Errorf(`Stream ended before expected`))
+				return Fail(state, fmt.Errorf(`Stream ended, expected "%s"`, string(expectedList[i:])))
 			}
 
 			if currentState.CurrentRune() != expected {
@@ -167,6 +168,83 @@ func RepeatUntil(parser Parser, terminator Parser) Parser {
 
 		// log.Printf(`stopped`)
 		return Success(currentState, results)
+	})
+}
+
+type Partial interface{}
+
+// RestarableOneOrMore restarts the parsing from a given safepoint matched by
+// another "restart" parser. For example (see examples for the precise
+// definition of this parser, special modifiers omitted for brevity):
+//
+//  parser := RestarableOneOrMore(SeqOf(OneOrMore(Expect('a')), AnyOf(Newline, EOF)), Newline)
+//  ParseRuneReader(parser, strings.NewReader("aaaa\naaaaa\naaabbbb\naaaaa\naa"))
+//
+// and the result is ["aaaa", "aaaaa", Partial("aaa"), "aaaaa", "aa"]
+func RestarableOneOrMore(parser Parser, restart Parser) Parser {
+	return FuncParser(func(state ParserState) (*ParserResult, error) {
+		// currentState := state
+		// results := []interface{}{}
+
+		// currentState.(*scanner).PrintErrorMessage(nil)
+		// pr, err := parser.Apply(currentState)
+		// if pr.Remaining.CurrentRune() == 0 {
+		// 	return Success(pr.Remaining, results)
+		// }
+		// if err != nil {
+		// 	results = append(results, pr.Result)
+
+		// 	currentState = pr.Remaining
+		// 	pr, err = restart.Apply(currentState)
+		// 	for err != nil {
+		// 		log.Printf(`Recovering... "%c"`, currentState.CurrentRune())
+		// 		if currentState.CurrentRune() == 0 {
+		// 			return Fail(currentState, fmt.Errorf(`(2) Stream ended, %v`, err))
+		// 		}
+		// 		pr, err = restart.Apply(currentState)
+		// 		currentState = currentState.Remaining()
+		// 	}
+		// 	log.Printf(`Parser recovered!`)
+		// 	pr.Remaining.(*scanner).PrintErrorMessage(nil)
+
+		// 	currentState = pr.Remaining
+		// }
+
+		// currentState = pr.Remaining
+
+		// for err == nil {
+		// 	results = append(results, pr.Result)
+
+		// 	currentState.(*scanner).PrintErrorMessage(nil)
+		// 	pr, err = parser.Apply(currentState)
+		// 	pr.Remaining.(*scanner).PrintErrorMessage(nil)
+		// 	if pr.Remaining.CurrentRune() == 0 {
+		// 		return Success(pr.Remaining, results)
+		// 	}
+		// 	if err != nil {
+		// 		results = append(results, pr.Result)
+
+		// 		currentState = pr.Remaining
+		// 		pr, err = restart.Apply(currentState)
+		// 		for err != nil {
+		// 			log.Printf(`Recovering... "%c"`, currentState.CurrentRune())
+		// 			if currentState.CurrentRune() == 0 {
+		// 				return Fail(currentState, fmt.Errorf(`(4) Stream ended, %v`, err))
+		// 			}
+		// 			pr, err = restart.Apply(currentState)
+		// 			currentState = currentState.Remaining()
+		// 		}
+		// 		log.Printf(`Parser recovered!`)
+		// 		pr.Remaining.(*scanner).PrintErrorMessage(nil)
+
+		// 		currentState = pr.Remaining
+		// 	}
+
+		// 	currentState = pr.Remaining
+		// }
+
+		// return Success(currentState, results)
+		return parser.Apply(state)
 	})
 }
 
