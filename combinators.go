@@ -171,6 +171,7 @@ func RepeatUntil(parser Parser, terminator Parser) Parser {
 	})
 }
 
+// Partial rappresents a partial parse for use of all "Recoveralbe*" functions
 type Partial interface{}
 
 // RestarableOneOrMore restarts the parsing from a given safepoint matched by
