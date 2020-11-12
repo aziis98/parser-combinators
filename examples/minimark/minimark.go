@@ -1,62 +1,15 @@
 package minimark
 
-import "github.com/aziis98/parcomb"
+import "github.com/aziis98/parcomb/examples/minimark/parser"
 
-// Heading ...
-var Heading = parcomb.SeqOf(
-	parcomb.Transform(
-		parcomb.OneOrMore(parcomb.Expect('#')),
-		func(i interface{}) interface{} {
-			return len(i.([]interface{}))
-		},
-	),
-	parcomb.SeqIgnore(parcomb.InlineSpace),
-	parcomb.StringifyResult(
-		parcomb.ZeroOrMore(
-			parcomb.ExpectPredicate(func(r rune) bool {
-				return r != '\n'
-			}),
-		),
-	),
-)
+// HeadingParser shortcur for "parser.Heading"
+var HeadingParser = parser.Heading
 
-// Paragraph ...
-var Paragraph = parcomb.StringifyResult(
-	parcomb.RepeatUntil(
-		parcomb.Any,
-		parcomb.AnyOf(
-			parcomb.SeqOf(
-				parcomb.Expect('\n'),
-				parcomb.AnyOf(
-					parcomb.Expect('\n'),
-					parcomb.EOF,
-				),
-			),
-			parcomb.EOF,
-		),
-	),
-)
+// ParagraphParser shortcur for "parser.Paragraph"
+var ParagraphParser = parser.Paragraph
 
-// Itemize ...
-var Itemize = parcomb.OneOrMore(
-	parcomb.SeqOf(
-		parcomb.ExpectString([]rune(" - ")),
-		parcomb.StringifyResult(
-			parcomb.ZeroOrMore(
-				parcomb.ExpectPredicate(func(r rune) bool {
-					return r != '\n'
-				}),
-			),
-		),
-	),
-)
+// ItemizeParser shortcur for "parser.Itemize"
+var ItemizeParser = parser.Itemize
 
-// Minimark ...
-var Minimark = parcomb.ZeroOrMore(
-	parcomb.AnyOf(
-		parcomb.Newline,
-		Heading,
-		Itemize,
-		Paragraph,
-	),
-)
+// MinimarkParser shortcur for "parser.Minimark"
+var MinimarkParser = parser.Minimark
