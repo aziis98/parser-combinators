@@ -202,4 +202,46 @@ func TestCommon(t *testing.T) {
 		r, _ := ParseRuneReader(Decimal, strings.NewReader("123.456"))
 		assert.Equal(t, "123.456", r)
 	}
+	{
+		r, _ := ParseRuneReader(Decimal, strings.NewReader("+123.456"))
+		assert.Equal(t, "+123.456", r)
+	}
+	{
+		r, _ := ParseRuneReader(Decimal, strings.NewReader("-123.456"))
+		assert.Equal(t, "-123.456", r)
+	}
+	{
+		r, _ := ParseRuneReader(Decimal2, strings.NewReader("-123.456"))
+		assert.Equal(t, "-123.456", r)
+	}
+}
+
+func BenchmarkDecimal0(b *testing.B) {
+	var r interface{}
+
+	for n := 0; n < b.N; n++ {
+		r, _ = ParseRuneReader(Decimal, strings.NewReader("1.0"))
+	}
+
+	b.Log(r)
+}
+
+func BenchmarkDecimal1(b *testing.B) {
+	var r interface{}
+
+	for n := 0; n < b.N; n++ {
+		r, _ = ParseRuneReader(Decimal, strings.NewReader("-123.456"))
+	}
+
+	b.Log(r)
+}
+
+func BenchmarkDecimal2(b *testing.B) {
+	var r interface{}
+
+	for n := 0; n < b.N; n++ {
+		r, _ = ParseRuneReader(Decimal2, strings.NewReader("-123.456"))
+	}
+
+	b.Log(r)
 }

@@ -12,15 +12,16 @@ func Success(state ParserState, result interface{}) (*ParserResult, error) {
 }
 
 // Fail creates a "failing" ParserResult
-func Fail(state ParserState, e error) (*ParserResult, error) {
-	return &ParserResult{nil, state}, e
+func Fail(state ParserState, err error) (*ParserResult, error) {
+	return &ParserResult{nil, state}, err
 }
 
 // Expect creates a Parser that expects a single given character and if successfull returns a string as Result
 func Expect(expected rune) Parser {
 	return FuncParser(func(state ParserState) (*ParserResult, error) {
-
-		// state.(*scanner).PrintErrorMessage(fmt.Errorf(`Expect() :: "%c" == "%c"`, state.CurrentRune(), expected))
+		if state.CurrentRune() == 0 {
+			return Fail(state, fmt.Errorf(`Stream ended before expected`))
+		}
 
 		if state.CurrentRune() != expected {
 			return Fail(state, fmt.Errorf(`Expected "%c"`, expected))
@@ -33,11 +34,17 @@ func Expect(expected rune) Parser {
 // ExpectPredicate creates a Parser for a rune based on given predicate function
 func ExpectPredicate(predicate func(rune) bool, descriptions ...string) Parser {
 	return FuncParser(func(state ParserState) (*ParserResult, error) {
+		if state.CurrentRune() == 0 {
+			return Fail(state, fmt.Errorf(`Stream ended before expected`))
+		}
+
+		// log.Printf(`predicate: "%c" is %v`, state.CurrentRune(), descriptions)
+
 		if predicate(state.CurrentRune()) {
 			return Success(state.Remaining(), string(state.CurrentRune()))
 		}
 
-		return Fail(state, fmt.Errorf(`Expected "%v"`, descriptions))
+		return Fail(state, fmt.Errorf(`Expected "%+v"`, descriptions))
 	})
 }
 
@@ -45,6 +52,10 @@ func ExpectPredicate(predicate func(rune) bool, descriptions ...string) Parser {
 func ExpectAny(expectedList []rune) Parser {
 	return FuncParser(func(state ParserState) (*ParserResult, error) {
 		for _, expected := range expectedList {
+			if state.CurrentRune() == 0 {
+				return Fail(state, fmt.Errorf(`Stream ended before expected`))
+			}
+
 			if state.CurrentRune() == expected {
 				return Success(state.Remaining(), string(expected))
 			}
@@ -60,6 +71,10 @@ func ExpectString(expectedList []rune) Parser {
 		currentState := state
 
 		for _, expected := range expectedList {
+			if state.CurrentRune() == 0 {
+				return Fail(state, fmt.Errorf(`Stream ended before expected`))
+			}
+
 			if currentState.CurrentRune() != expected {
 				return Fail(currentState, fmt.Errorf(`Expected "%c"`, expected))
 			}
@@ -79,24 +94,33 @@ func SeqOf(parsers ...Parser) Parser {
 
 		for _, parser := range parsers {
 
-			// log.Printf(`SeqOf(%v)`, i)
-			// currentState.(*scanner).PrintErrorMessage(nil)
 			pr, err := parser.Apply(currentState)
-			// pr.Remaining.(*scanner).PrintErrorMessage(nil)
 
 			if err != nil {
-				// log.Printf(`SeqOf() :: End`)
 				return Fail(currentState, err)
 			}
 
-			results = append(results, pr.Result)
+			if _, ok := parser.(*seqIgnore); !ok {
+				results = append(results, pr.Result)
+			}
 			currentState = pr.Remaining
 		}
 
-		// log.Printf(`SeqOf() :: End`)
-
 		return Success(currentState, results)
 	})
+}
+
+type seqIgnore struct {
+	Parser Parser
+}
+
+func (p seqIgnore) Apply(state ParserState) (*ParserResult, error) {
+	return p.Parser.Apply(state)
+}
+
+// SeqIgnore wrapps an existing parser and ignores its result when used in "SeqOf"
+func SeqIgnore(parser Parser) Parser {
+	return &seqIgnore{parser}
 }
 
 // AnyOf must match one of the given parsers
@@ -106,22 +130,43 @@ func AnyOf(parsers ...Parser) Parser {
 
 		for _, parser := range parsers {
 
-			// log.Printf(`AnyOf(%v)`, i)
-			// state.(*scanner).PrintErrorMessage(nil)
 			pr, err := parser.Apply(state)
 
 			if err == nil {
-				// log.Printf(`AnyOf() :: End`)
-				return &ParserResult{pr.Result, pr.Remaining}, nil
+				return Success(pr.Remaining, pr.Result)
 			}
-
-			// pr.Remaining.(*scanner).PrintErrorMessage(nil)
 
 			errors = append(errors, fmt.Sprintf(" - %v", err))
 		}
 
-		// log.Printf(`AnyOf() :: End`)
 		return Fail(state, fmt.Errorf("All cases failed:\n%s", strings.Join(errors, "\n")))
+	})
+}
+
+// RepeatUntil ...
+func RepeatUntil(parser Parser, terminator Parser) Parser {
+	return FuncParser(func(state ParserState) (*ParserResult, error) {
+		currentState := state
+		results := []interface{}{}
+
+		var err error
+		_, err = terminator.Apply(currentState)
+
+		for err != nil {
+			pr, err2 := parser.Apply(currentState)
+			if err2 != nil {
+				return Fail(state, err2)
+			}
+
+			results = append(results, pr.Result)
+			currentState = pr.Remaining
+
+			_, err = terminator.Apply(currentState)
+			// log.Printf(`until: %+v`, err)
+		}
+
+		// log.Printf(`stopped`)
+		return Success(currentState, results)
 	})
 }
 
@@ -154,25 +199,19 @@ func ZeroOrMore(parser Parser) Parser {
 		currentState := state
 		results := []interface{}{}
 
-		// log.Printf(`ZeroOrMore(0)`)
-		// currentState.(*scanner).PrintErrorMessage(nil)
-
 		pr, err := parser.Apply(currentState)
 		if err != nil {
-			return &ParserResult{results, currentState}, nil
+			return Success(currentState, results)
 		}
 
-		for err == nil {
+		for currentState.CurrentRune() != 0 && err == nil {
 			results = append(results, pr.Result)
 			currentState = pr.Remaining
-
-			// log.Printf(`ZeroOrMore(+1)`)
-			// currentState.(*scanner).PrintErrorMessage(nil)
 
 			pr, err = parser.Apply(currentState)
 		}
 
-		return &ParserResult{results, currentState}, nil
+		return Success(currentState, results)
 	})
 }
 
@@ -193,17 +232,19 @@ func Transform(parser Parser, transform func(interface{}) interface{}) Parser {
 	return FuncParser(func(state ParserState) (*ParserResult, error) {
 		pr, err := parser.Apply(state)
 
-		// log.Printf(`Transform()`)
-		// pr.Remaining.(*scanner).PrintErrorMessage(nil)
-		// log.Printf(`before: %+v`, pr.Result)
-
 		if err != nil {
 			return Fail(state, err)
 		}
 
 		result := transform(pr.Result)
-		// log.Printf(`after: %+v`, result)
 
-		return &ParserResult{result, pr.Remaining}, nil
+		return Success(pr.Remaining, result)
+	})
+}
+
+// StringifyResult ...
+func StringifyResult(parser Parser) Parser {
+	return Transform(parser, func(i interface{}) interface{} {
+		return StringifyInterfaces(i)
 	})
 }
