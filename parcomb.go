@@ -1,8 +1,9 @@
 package parcomb
 
 import (
+	"fmt"
 	"io"
-	"log"
+	"strings"
 )
 
 // ParserState ...
@@ -17,28 +18,22 @@ type ParserResult struct {
 	Remaining ParserState
 }
 
-// IsError - trivial
-func (result ParserResult) IsError() bool {
-	_, ok := result.Result.(error)
-	return ok
-}
-
 // Parser rappresents a generic parser combinator
 type Parser interface {
-	Apply(state ParserState) *ParserResult
+	Apply(state ParserState) (*ParserResult, error)
 }
 
 // FuncParser functional binding for the Parser interface
-type FuncParser func(state ParserState) *ParserResult
+type FuncParser func(state ParserState) (*ParserResult, error)
 
 // Apply - trivial
-func (p FuncParser) Apply(state ParserState) *ParserResult {
+func (p FuncParser) Apply(state ParserState) (*ParserResult, error) {
 	return p(state)
 }
 
 type scanner struct {
 	reader io.RuneReader
-	buffer []rune
+	buffer *[]rune
 	cursor int
 
 	line, col int
@@ -47,9 +42,9 @@ type scanner struct {
 func (s *scanner) CurrentRune() rune {
 	loops := 0
 
-	for len(s.buffer) <= s.cursor {
+	for len(*s.buffer) <= s.cursor {
 		r, _, err := s.reader.ReadRune()
-		log.Printf(`Read(%d) "%c"`, loops, r)
+		// log.Printf(`Read(%d) "%c"`, loops, r)
 
 		if err != nil {
 			return 0
@@ -62,11 +57,11 @@ func (s *scanner) CurrentRune() rune {
 			s.col++
 		}
 
-		s.buffer = append(s.buffer, r)
+		*s.buffer = append(*s.buffer, r)
 		loops++
 	}
 
-	return s.buffer[s.cursor]
+	return (*s.buffer)[s.cursor]
 }
 
 func (s *scanner) Remaining() ParserState {
@@ -79,17 +74,37 @@ func (s *scanner) Remaining() ParserState {
 	}
 }
 
+func (s *scanner) PrintErrorMessage(e error) {
+	var r rune
+	var err error
+
+	r, _, err = s.reader.ReadRune()
+
+	for err == nil {
+		*s.buffer = append(*s.buffer, r)
+		r, _, err = s.reader.ReadRune()
+	}
+
+	lines := strings.Split(string(*s.buffer), "\n")
+	loc := fmt.Sprintf(`%d:%d`, s.line, s.col)
+
+	fmt.Printf("%v\n", e)
+	fmt.Printf("at %s\n", loc)
+	fmt.Printf(" | %s\n", lines[s.line])
+	fmt.Printf("  %s^\n", strings.Repeat(" ", s.col))
+}
+
 // ParseRuneReader - trivial
 func ParseRuneReader(parser Parser, r io.RuneReader) (interface{}, error) {
-	scanner := &scanner{r, []rune{}, 0, 0, 0}
+	s := &scanner{r, &[]rune{}, 0, 0, 0}
 
-	log.Printf(`parser.Apply()`)
-	rr := parser.Apply(scanner)
+	pr, err := parser.Apply(s)
+	if err != nil {
+		errScanner := pr.Remaining.(*scanner)
+		errScanner.PrintErrorMessage(err)
 
-	err, ok := rr.Result.(error)
-	if ok {
 		return nil, err
 	}
 
-	return rr.Result, nil
+	return pr.Result, nil
 }
