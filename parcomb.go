@@ -1,19 +1,26 @@
 package parcomb
 
 import (
-	"fmt"
 	"io"
 	"log"
 )
 
+// ParserState ...
 type ParserState interface {
 	CurrentRune() rune
 	Remaining() ParserState
 }
 
+// ParserResult ...
 type ParserResult struct {
 	Result    interface{}
 	Remaining ParserState
+}
+
+// IsError - trivial
+func (result ParserResult) IsError() bool {
+	_, ok := result.Result.(error)
+	return ok
 }
 
 // Parser rappresents a generic parser combinator
@@ -27,27 +34,6 @@ type FuncParser func(state ParserState) *ParserResult
 // Apply - trivial
 func (p FuncParser) Apply(state ParserState) *ParserResult {
 	return p(state)
-}
-
-// Success creates a successfull ParserResult
-func Success(state ParserState, result interface{}) *ParserResult {
-	return &ParserResult{result, state.Remaining()}
-}
-
-// Fail creates a "failing" ParserResult
-func Fail(state ParserState, e error) *ParserResult {
-	return &ParserResult{e, state.Remaining()}
-}
-
-// Expect creates a Parser that expects a single given character and if successfull returns a string as Result
-func Expect(expected rune) Parser {
-	return FuncParser(func(state ParserState) *ParserResult {
-		if state.CurrentRune() != expected {
-			return Fail(state, fmt.Errorf(`Expected "%c"`, expected))
-		}
-
-		return Success(state, string(expected))
-	})
 }
 
 type scanner struct {
