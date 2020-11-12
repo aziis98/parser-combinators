@@ -1,9 +1,7 @@
-package parcomb
+package combinators
 
 import (
 	"fmt"
-
-	// "log"
 	"strings"
 )
 

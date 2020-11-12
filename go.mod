@@ -1,4 +1,4 @@
-module github.com/aziis98/parcomb
+module github.com/aziis98/parser-combinators
 
 go 1.15
 

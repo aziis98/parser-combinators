@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aziis98/parcomb"
-	"github.com/aziis98/parcomb/examples/minimark/doc"
-	"github.com/aziis98/parcomb/examples/minimark/parser"
+	c "github.com/aziis98/parser-combinators"
+	"github.com/aziis98/parser-combinators/examples/minimark/doc"
+	"github.com/aziis98/parser-combinators/examples/minimark/parser"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,11 +28,11 @@ Paragraph of some long text.
 
 func TestMinimark(t *testing.T) {
 	{
-		r, _ := parcomb.ParseRuneReader(parser.Heading, strings.NewReader("### Prova"))
+		r, _ := c.ParseRuneReader(parser.Heading, strings.NewReader("### Prova"))
 		assert.Equal(t, &doc.Heading{Level: 3, Text: "Prova"}, r)
 	}
 	{
-		r, _ := parcomb.ParseRuneReader(parser.Minimark, strings.NewReader(example1))
+		r, _ := c.ParseRuneReader(parser.Minimark, strings.NewReader(example1))
 
 		// json, err := json.MarshalIndent(r, "", "  ")
 		// if err != nil {

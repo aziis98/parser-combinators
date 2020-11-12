@@ -1,6 +1,6 @@
 package minimark
 
-import "github.com/aziis98/parcomb/examples/minimark/parser"
+import "github.com/aziis98/parser-combinators/examples/minimark/parser"
 
 // HeadingParser shortcur for "parser.Heading"
 var HeadingParser = parser.Heading

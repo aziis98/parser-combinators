@@ -1,23 +1,23 @@
 package parser
 
 import (
-	"github.com/aziis98/parcomb"
-	"github.com/aziis98/parcomb/examples/minimark/doc"
+	c "github.com/aziis98/parser-combinators"
+	"github.com/aziis98/parser-combinators/examples/minimark/doc"
 )
 
 // Heading ...
-var Heading = parcomb.Transform(
-	parcomb.SeqOf(
-		parcomb.Transform(
-			parcomb.OneOrMore(parcomb.Expect('#')),
+var Heading = c.Transform(
+	c.SeqOf(
+		c.Transform(
+			c.OneOrMore(c.Expect('#')),
 			func(i interface{}) interface{} {
 				return len(i.([]interface{}))
 			},
 		),
-		parcomb.SeqIgnore(parcomb.InlineSpace),
-		parcomb.StringifyResult(
-			parcomb.ZeroOrMore(
-				parcomb.ExpectPredicate(func(r rune) bool {
+		c.SeqIgnore(c.InlineSpace),
+		c.StringifyResult(
+			c.ZeroOrMore(
+				c.ExpectPredicate(func(r rune) bool {
 					return r != '\n'
 				}),
 			),
@@ -32,19 +32,19 @@ var Heading = parcomb.Transform(
 )
 
 // Paragraph ...
-var Paragraph = parcomb.Transform(
-	parcomb.StringifyResult(
-		parcomb.RepeatUntil(
-			parcomb.Any,
-			parcomb.AnyOf(
-				parcomb.SeqOf(
-					parcomb.Expect('\n'),
-					parcomb.AnyOf(
-						parcomb.Expect('\n'),
-						parcomb.EOF,
+var Paragraph = c.Transform(
+	c.StringifyResult(
+		c.RepeatUntil(
+			c.Any,
+			c.AnyOf(
+				c.SeqOf(
+					c.Expect('\n'),
+					c.AnyOf(
+						c.Expect('\n'),
+						c.EOF,
 					),
 				),
-				parcomb.EOF,
+				c.EOF,
 			),
 		),
 	),
@@ -55,8 +55,8 @@ var Paragraph = parcomb.Transform(
 )
 
 // List ...
-var List = parcomb.Transform(
-	parcomb.OneOrMore(
+var List = c.Transform(
+	c.OneOrMore(
 		Item,
 	),
 	func(i interface{}) interface{} {
@@ -69,20 +69,20 @@ var List = parcomb.Transform(
 )
 
 // Item ...
-var Item = parcomb.Transform(
-	parcomb.SeqOf(
-		parcomb.SeqIgnore(
-			parcomb.ExpectString([]rune(" - ")),
+var Item = c.Transform(
+	c.SeqOf(
+		c.SeqIgnore(
+			c.ExpectString([]rune(" - ")),
 		),
-		parcomb.StringifyResult(
-			parcomb.ZeroOrMore(
-				parcomb.ExpectPredicate(func(r rune) bool {
+		c.StringifyResult(
+			c.ZeroOrMore(
+				c.ExpectPredicate(func(r rune) bool {
 					return r != '\n'
 				}),
 			),
 		),
-		parcomb.SeqIgnore(
-			parcomb.Newline,
+		c.SeqIgnore(
+			c.Newline,
 		),
 	),
 	func(i interface{}) interface{} {
@@ -91,10 +91,10 @@ var Item = parcomb.Transform(
 )
 
 // Minimark ...
-var Minimark = parcomb.Transform(
-	parcomb.ZeroOrMore(
-		parcomb.AnyOf(
-			parcomb.Newline,
+var Minimark = c.Transform(
+	c.ZeroOrMore(
+		c.AnyOf(
+			c.Newline,
 			Heading,
 			List,
 			Paragraph,
