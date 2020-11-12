@@ -1,8 +1,10 @@
 # Parcomb
 
-Personal (queryable?) parser combinator library for Golang.
+Personal parser combinator library for Golang.
 
 ## Examples
+
+TODO
 
 ## Longer Examples
 
@@ -16,4 +18,5 @@ Personal (queryable?) parser combinator library for Golang.
 
 ## TODO
 
- - Add tab indented parser combinator inside the Minimark example syntax.
+ - **[Work in progress]** Recoverable parsing
+ - **[Idea]** Add tab indented parser combinator inside the Minimark example syntax.
