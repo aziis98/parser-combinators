@@ -35,8 +35,12 @@ type scanner struct {
 	reader io.RuneReader
 	buffer *[]rune
 	cursor int
+}
 
-	line, col int
+func (s *scanner) GetLocation() (int, int) {
+	lines := strings.Split(string((*s.buffer)[:s.cursor]), "\n")
+	lastLine := lines[len(lines)-1]
+	return len(lines) - 1, len(lastLine) + 1
 }
 
 func (s *scanner) CurrentRune() rune {
@@ -44,17 +48,9 @@ func (s *scanner) CurrentRune() rune {
 
 	for len(*s.buffer) <= s.cursor {
 		r, _, err := s.reader.ReadRune()
-		// log.Printf(`Read(%d) "%c"`, loops, r)
 
 		if err != nil {
 			return 0
-		}
-
-		if r == '\n' {
-			s.line++
-			s.col = 0
-		} else {
-			s.col++
 		}
 
 		*s.buffer = append(*s.buffer, r)
@@ -69,8 +65,6 @@ func (s *scanner) Remaining() ParserState {
 		s.reader,
 		s.buffer,
 		s.cursor + 1,
-
-		s.line, s.col,
 	}
 }
 
@@ -86,17 +80,22 @@ func (s *scanner) PrintErrorMessage(e error) {
 	}
 
 	lines := strings.Split(string(*s.buffer), "\n")
-	loc := fmt.Sprintf(`%d:%d`, s.line, s.col)
 
-	fmt.Printf("%v\n", e)
+	line, col := s.GetLocation()
+
+	loc := fmt.Sprintf(`%d:%d`, line, col)
+
+	if e != nil {
+		fmt.Printf("%v\n", e)
+	}
 	fmt.Printf("at %s\n", loc)
-	fmt.Printf(" | %s\n", lines[s.line])
-	fmt.Printf("  %s^\n", strings.Repeat(" ", s.col))
+	fmt.Printf(" | %s\n", lines[line])
+	fmt.Printf("  %s^\n", strings.Repeat(" ", col))
 }
 
 // ParseRuneReader - trivial
 func ParseRuneReader(parser Parser, r io.RuneReader) (interface{}, error) {
-	s := &scanner{r, &[]rune{}, 0, 0, 0}
+	s := &scanner{r, &[]rune{}, 0}
 
 	pr, err := parser.Apply(s)
 	if err != nil {

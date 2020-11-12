@@ -47,22 +47,22 @@ func TestExpectAny(t *testing.T) {
 
 func TestSeq(t *testing.T) {
 	{
-		parser1 := Seq(Expect('a'), Expect('a'))
+		parser1 := SeqOf(Expect('a'), Expect('a'))
 		r, _ := ParseRuneReader(parser1, strings.NewReader("aa"))
 		assert.EqualValues(t, []interface{}{"a", "a"}, r)
 	}
 	{
-		parser1 := Seq(Expect('a'), Expect('a'))
+		parser1 := SeqOf(Expect('a'), Expect('a'))
 		r, _ := ParseRuneReader(parser1, strings.NewReader("aaa"))
 		assert.EqualValues(t, []interface{}{"a", "a"}, r)
 	}
 	{
-		parser1 := Seq(Expect('a'), Expect('a'))
+		parser1 := SeqOf(Expect('a'), Expect('a'))
 		_, err := ParseRuneReader(parser1, strings.NewReader("a"))
 		assert.EqualError(t, err, `Expected "a"`)
 	}
 	{
-		parser1 := Seq(Expect('a'), Expect('a'))
+		parser1 := SeqOf(Expect('a'), Expect('a'))
 		_, err := ParseRuneReader(parser1, strings.NewReader("ababab"))
 		assert.EqualError(t, err, `Expected "a"`)
 	}
@@ -174,5 +174,32 @@ func TestMultipleStrings2(t *testing.T) {
 	{
 		r, _ := ParseRuneReader(parser, strings.NewReader("foooer"))
 		assert.Equal(t, "foo", r)
+	}
+}
+
+func TestCommon(t *testing.T) {
+	{
+		r, _ := ParseRuneReader(Integer, strings.NewReader("7"))
+		assert.Equal(t, "7", r)
+	}
+	{
+		r, _ := ParseRuneReader(Integer, strings.NewReader("123"))
+		assert.Equal(t, "123", r)
+	}
+	{
+		r, _ := ParseRuneReader(Integer, strings.NewReader("0123"))
+		assert.Equal(t, "0", r)
+	}
+	{
+		r, _ := ParseRuneReader(Decimal, strings.NewReader("3.14"))
+		assert.Equal(t, "3.14", r)
+	}
+	{
+		r, _ := ParseRuneReader(Decimal, strings.NewReader("0.681"))
+		assert.Equal(t, "0.681", r)
+	}
+	{
+		r, _ := ParseRuneReader(Decimal, strings.NewReader("123.456"))
+		assert.Equal(t, "123.456", r)
 	}
 }
