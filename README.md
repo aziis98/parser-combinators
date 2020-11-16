@@ -1,4 +1,4 @@
-# go `parser-combinators`
+# Parser Combinators
 
 Personal parser combinator library for Golang.
 
