@@ -1,0 +1,35 @@
+goos: linux
+goarch: amd64
+pkg: github.com/aziis98/parser-combinators
+BenchmarkDecimal0-4   	  290078	      4049 ns/op
+--- BENCH: BenchmarkDecimal0-4
+    parcomb_test.go:228: 1.0
+    parcomb_test.go:228: 1.0
+    parcomb_test.go:228: 1.0
+    parcomb_test.go:228: 1.0
+BenchmarkDecimal1-4   	  212173	      5287 ns/op
+--- BENCH: BenchmarkDecimal1-4
+    parcomb_test.go:238: -123.456
+    parcomb_test.go:238: -123.456
+    parcomb_test.go:238: -123.456
+    parcomb_test.go:238: -123.456
+BenchmarkDecimal2-4   	  233346	      5442 ns/op
+--- BENCH: BenchmarkDecimal2-4
+    parcomb_test.go:248: -123.456
+    parcomb_test.go:248: -123.456
+    parcomb_test.go:248: -123.456
+    parcomb_test.go:248: -123.456
+PASS
+ok  	github.com/aziis98/parser-combinators	3.728s
+goos: linux
+goarch: amd64
+pkg: github.com/aziis98/parser-combinators/examples/minimark
+Benchmark1-4   	    4148	    296310 ns/op
+--- BENCH: Benchmark1-4
+    minimark_test.go:70: [0xc00000e480 0xc00000e940 0xc00000ee20 0xc000113300 0xc000113e50 0xc000091440]
+    minimark_test.go:70: [0xc0002c7820 0xc0002c7ce0 0xc0002cc1c0 0xc0002cfd50 0xc0002da8a0 0xc0002e2060]
+    minimark_test.go:70: [0xc0002dd880 0xc0002ddd40 0xc0002de220 0xc0002e3eb0 0xc0002f8a00 0xc0002fe0c0]
+PASS
+ok  	github.com/aziis98/parser-combinators/examples/minimark	1.264s
+?   	github.com/aziis98/parser-combinators/examples/minimark/doc	[no test files]
+?   	github.com/aziis98/parser-combinators/examples/minimark/parser	[no test files]
